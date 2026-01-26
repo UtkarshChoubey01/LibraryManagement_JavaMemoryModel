@@ -9,6 +9,7 @@ public class MemberFactory {
 
 	public static List<Member> createMembers(){
 	
+		System.out.println("Entering create Members");
 		List<Member> members = new ArrayList<Member>();
 		members.add(new Member("Utkarsh Choubey","MemIni0001"));
 		members.add(new Member("Priyanka Ahirwar","MemIni0002"));
@@ -18,7 +19,7 @@ public class MemberFactory {
 		members.add(new Member("Shikha Choubey","MemIni0006"));
 		members.add(new Member("Pushpa Choubey","MemIni0007"));
 		
-	
+		System.out.println("Exiting create Members");
 		return members;	
 	}
 }

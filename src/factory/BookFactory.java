@@ -9,6 +9,7 @@ public class BookFactory {
 
 	public static List<Book> createBooks(){
 		
+		System.out.println("Entering create books");
 		List<Book> books = new ArrayList<Book>();
 		books.add(new Book("Chetan Bhagat","Half Girlfreind","CHBGHG0001"));
 		books.add(new Book("Chetan Bhagat","Full Girlfreind","CHBGHG0002"));
@@ -26,7 +27,7 @@ public class BookFactory {
 		books.add(new Book("JK Rowling","Harry Potter and Deathly Hallows","CHBGHG0014"));
 		books.add(new Book("JK Rowling","Harry Potter and Chamber of Secrets","CHBGHG0015"));
 		books.add(new Book("JK Rowling","Harry Potter and Prisoner of Azkaban","CHBGHG0016"));
-	
+		System.out.println("Exiting create books");
 		return books;	
 	}
 }

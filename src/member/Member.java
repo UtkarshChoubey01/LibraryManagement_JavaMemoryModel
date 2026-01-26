@@ -28,7 +28,12 @@ public class Member {
 		return borrowedBooks;
 	}
 	public void setBorrowedBooks(List<Book> borrowedBooks) {
+		
+		System.out.println("Creating temp variable");
+		Book book = new Book("testauthor","testtitle","testISBN");
+		System.out.println("Temp variable created");
 		this.borrowedBooks = borrowedBooks;
+		System.out.println("Exiting set borrowed books");
 	}
 	
 	
