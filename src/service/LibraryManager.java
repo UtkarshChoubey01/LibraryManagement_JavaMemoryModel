@@ -26,7 +26,7 @@ public class LibraryManager {
 		int i =books.size();
 		for(Member mem: members) {
 			if(i==0) break;
-			else mem.setBorrowedBooks(books.subList(0,i));
+			else mem.addBorrowedBooks(books.subList(0,i));
 			i--;
 		}
 		

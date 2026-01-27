@@ -27,7 +27,7 @@ public class Member {
 	public List<Book> getBorrowedBooks() {
 		return borrowedBooks;
 	}
-	public void setBorrowedBooks(List<Book> borrowedBooks) {
+	public void addBorrowedBooks(List<Book> borrowedBooks) {
 		
 		System.out.println("Creating temp variable");
 		Book book = new Book("testauthor","testtitle","testISBN");
