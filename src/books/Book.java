@@ -21,4 +21,9 @@ public class Book {
 	public String getISBN() {
 		return ISBN;
 	}		
+	
+	@Override
+	protected void finalize() throws Throwable {
+	    System.out.println("GC called for Book object: " + this);
+	}
 }
