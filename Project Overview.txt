@@ -1,0 +1,405 @@
+# Java Memory Model – Library Management Project Report
+
+## 1. Project Overview
+
+This project was built to **practically demonstrate Java Memory Model concepts** using a realistic domain example (Library System). Instead of using artificial byte arrays, real business objects like `Book`, `Member`, `Library`, and service classes were used to observe:
+
+* Heap vs Stack behavior
+* Object lifecycle
+* Garbage Collection behavior
+* Static memory retention
+* Controlled memory leak simulation
+* Reference holding patterns
+
+The project flow starts from `Main` class and initializes a library with books and members, while intentionally storing objects in a static cache to simulate real-world memory problems.
+
+---
+
+## 2. Package Structure
+
+```
+main
+ └── Main.java
+
+service
+ ├── LibraryManager.java
+ └── CacheManager.java
+
+factory
+ ├── BookFactory.java
+ └── MemberFactory.java
+
+library
+ └── Library.java
+
+books
+ └── Book.java
+
+member
+ └── Member.java
+```
+
+Each package is responsible for a specific layer of the application.
+
+---
+
+## 3. Application Entry Point
+
+### Main.java
+
+```java
+LibraryManager.init();
+```
+
+### Concept Demonstrated
+
+* **Stack frame creation** for `main()`
+* Method call transfer from `Main` → `LibraryManager`
+* Object creation starts from here
+
+---
+
+## 4. Core Initialization Flow
+
+### LibraryManager.java
+
+Responsibilities:
+
+* Create service objects
+* Create temporary objects
+* Generate books and members
+* Populate library
+* Push books into static cache
+
+Key code:
+
+```java
+CacheManager cmg = new CacheManager();
+Library lib = new Library();
+```
+
+### Concept: Stack vs Heap
+
+* `cmg` and `lib` references are stored on **stack**
+* Actual `CacheManager` and `Library` objects are created in **heap**
+
+---
+
+## 5. Temporary Object Experiment
+
+```java
+List<Book> tempBooks = new ArrayList<>();
+for(int i=0;i<100000;i++){
+    tempBooks.add(new Book(...));
+}
+
+tempBooks.clear();
+tempBooks = null;
+```
+
+### Concept Demonstrated
+
+* Large heap allocation
+* Manual reference removal
+* Eligibility for Garbage Collection
+
+### Learning
+
+Even though 100,000 `Book` objects were created:
+
+* After `clear()` and `null`
+* No strong references remain
+* GC is allowed to reclaim memory
+
+This shows **how removing references helps GC**.
+
+---
+
+## 6. Factory Pattern Usage
+
+### BookFactory
+
+```java
+List<Book> books = BookFactory.createBooks();
+```
+
+### MemberFactory
+
+```java
+List<Member> members = MemberFactory.createMembers();
+```
+
+### Concepts Implemented
+
+* Object creation abstraction
+* Centralized instance creation
+* Reduced coupling
+* Realistic enterprise design pattern
+
+---
+
+## 7. Library Object Storage
+
+### Library.java
+
+```java
+private List<Book> books;
+private List<Member> members;
+```
+
+### Concept
+
+* Aggregation relationship
+* Heap reference graph creation
+* Nested object references
+
+Objects become connected like this:
+
+```
+Library → Books → Book objects
+Library → Members → Member objects
+```
+
+---
+
+## 8. Borrowed Books Reference Chain
+
+### Member.java
+
+```java
+mem.addBorrowedBooks(books.subList(0,i));
+```
+
+### Concepts
+
+* SubList creates **view reference** to original list
+* Member holds references to Book objects
+* Demonstrates shared object references
+
+This teaches:
+
+* One object can be referenced from multiple places
+* GC only removes objects when ALL references are gone
+
+---
+
+## 9. Static Cache – Memory Leak Core
+
+### CacheManager.java
+
+```java
+private static List<Book> cachedBooks = new ArrayList<>();
+```
+
+```java
+cachedBooks.addAll(books);
+```
+
+### MOST IMPORTANT CONCEPT
+
+This is the heart of STEP 7.
+
+Because `cachedBooks` is:
+
+* static
+* Class-level
+* Long living
+
+It becomes a **GC Root**.
+
+### What Happens
+
+* Books added here can NEVER be garbage collected
+* Even after method exits
+* Even after local variables disappear
+
+This simulates:
+
+* Application cache misuse
+* Memory leak scenarios
+* Production outage patterns
+
+---
+
+## 10. Controlled Memory Leak Simulation
+
+When `LibraryManager.init()` is called repeatedly:
+
+```
+init()
+  ↓
+Create Books
+  ↓
+Store in static cache
+  ↓
+Repeat
+```
+
+Heap usage keeps increasing.
+
+### Result
+
+* GC runs frequently
+* Heap pressure increases
+* Eventually OutOfMemoryError occurs
+
+This exactly matches real enterprise failures.
+
+---
+
+## 11. Garbage Collection Demonstration
+
+### Book.java
+
+```java
+@Override
+protected void finalize() throws Throwable {
+    System.out.println("GC called for Book object: " + this);
+}
+```
+
+### Learning
+
+* Shows when GC actually destroys objects
+* Helps visualize GC behavior
+* Demonstrates non-deterministic cleanup timing
+
+---
+
+## 12. JVM Memory Concepts Practiced
+
+### Heap
+
+* All objects: Book, Member, Library, List
+* Static cache objects
+
+### Stack
+
+* Method calls
+* Local references
+* Loop variables
+
+### GC Roots
+
+* Static fields
+* Thread stack references
+
+### Memory Leak Pattern
+
+```
+Static Collection → Holds Objects → GC Cannot Free
+```
+
+---
+
+## 13. Program Execution Flow (Flowchart)
+
+```
+START
+  |
+  v
+Main.main()
+  |
+  v
+LibraryManager.init()
+  |
+  +--> Create CacheManager
+  |
+  +--> Create Library
+  |
+  +--> Create Temp Books
+  |
+  +--> Clear Temp Books
+  |
+  +--> BookFactory.createBooks()
+  |
+  +--> MemberFactory.createMembers()
+  |
+  +--> Library.addBooks()
+  |
+  +--> CacheManager.addBooksToCache()
+  |
+  +--> Library.addMembers()
+  |
+  +--> Members borrow books
+  |
+  v
+Initialization Completed
+  |
+ END
+```
+
+---
+
+## 14. Real World Mapping
+
+This project simulates:
+
+| Project Component | Real Application Equivalent |
+| ----------------- | --------------------------- |
+| CacheManager      | In-memory cache (Redis/Map) |
+| LibraryManager    | Service Layer               |
+| Factory Classes   | DAO / Repository Layer      |
+| Static Cache      | Memory leak source          |
+
+---
+
+## 15. Key Interview Learnings
+
+After this project you can confidently explain:
+
+* Why static collections cause memory leaks
+* How GC works with reachable objects
+* Difference between temporary vs static memory
+* How object graphs affect GC
+* Heap pressure behavior
+* Production memory crash patterns
+
+---
+
+## 16. Final Summary
+
+This project is not just a library system.
+
+It is a **hands-on JVM memory laboratory** that demonstrates:
+
+* Object lifecycle
+* Memory allocation
+* Reference behavior
+* Garbage collection
+* Memory leak patterns
+* Enterprise design practices
+
+This makes it an excellent **interview explanation project** and **personal reference guide**.
+
+---
+
+END OF REPORT
+
+
+✅ Your **project analysis report has been created in the canvas**.
+
+What I’ve done for you:
+
+✔ Analyzed **all source files**
+✔ Documented **every concept we practiced**
+✔ Mapped code → JVM memory behavior
+✔ Added **real-world enterprise mapping**
+✔ Created a **clear execution flowchart**
+✔ Structured it as a **presentation + interview reference document**
+
+You can now use this report to:
+
+* Revise Java Memory Model
+* Explain your project in interviews
+* Present this project confidently
+* Reproduce the experiments later
+
+If you want, next we can:
+
+👉 Convert this into **interview presentation slides format**
+👉 Add **OOM experiment results section**
+👉 Add **heap diagram illustrations (ASCII)**
+👉 Or polish it into **PDF-ready format**
+
+Just tell me 👍
